@@ -22,6 +22,25 @@ df['dt_Venda']=pd.to_datetime(df['dt_Venda'])
 
 df['Mês'] = df['dt_Venda'].dt.strftime('%b').str.upper()
 
+#Listas de apoio________________________________________________________________________________________________________
+lista_meses = []
+for mes in df['Mês'].unique():
+    lista_meses.append({
+        'label': mes,
+        'value': mes
+    })
+lista_meses.append({'label': 'Ano Completo','value': 'ano'})
+
+lista_categorias = []
+for categoria in df['Categorias'].unique():
+    lista_categorias.append({
+        'label': categoria,
+        'value': categoria
+    })
+lista_categorias.append({'label': 'Todas as categorias', 'value': 'cat'})
+
+#FIM********************************************************************************************************************
+
 
 #Funções de apoio_______________________________________________________________________________________________________
 
@@ -31,17 +50,20 @@ def filtro_cliente(cliente_selecionado):
     else:
         return df['Cliente'] == cliente_selecionado
 
-
 def filtro_mes(mes_selecionado):
     if mes_selecionado is None:
         return pd.Series(True, index=df.index)
+    elif mes_selecionado =='ano':
+        return df['Mês']
     return df['Mês'] == mes_selecionado
 
 def filtro_categoria(categoria_selecionada):
     if categoria_selecionada is None:
         return pd.Series(True, index=df.index)
+    elif categoria_selecionada == 'cat':
+        return df['Categorias']
     else:
-        return df['id_Categoria'] == categoria_selecionada
+        return df['Categorias'] == categoria_selecionada
 
 
 #Criando App____________________________________________________________________________________________________________
@@ -96,32 +118,45 @@ linha_1 = html.Div([
     style={'text-align': 'center', 'width': '65%'}
     ),
 
-    html.Div(
-        dbc.RadioItems(
-            id='radio_meses', 
-            options=df['Mês'].unique(),
-            inline = True
-        ), style = {'width': '30%'}
-    ),
-
     html.Div([
         dbc.RadioItems(
+            id='radio_meses', 
+            options=lista_meses,
+            inline = True
+        ), 
+        dbc.RadioItems(
             id='radio_categoria',
-            options=df['Categorias'].unique(),
-            inline=True
-        )
-    ])
+            options=lista_categorias,
+            inline = True
+    )
+    ], style = {
+        'display':'flex',
+        'flex-direction': 'column',
+        'width': '30%',
+        'justify-content': 'space-around'
+    })
+        
 ], style={'margin-top':'40px',
           'display':'flex',
           'justify-content': 'space-around',
           'height': '300px'}
           )
 
+linha_2 = html.Div([
+        dcc.Graph(id='visual02', style={'width': '65%'}),
+        dcc.Graph(id='visual03', style = {'width': '30%'})
+], style={
+    'display':'flex',
+    'justify-content': 'space-around',
+    'height': '300px'
+})
+
 
 
 app.layout = html.Div([
     linha_cabecalho,
-    linha_1
+    linha_1,
+    linha_2
 
 ])
 
@@ -164,7 +199,7 @@ def visual01(cliente, mes, categoria,toggle):
     nome_mes = filtro_mes(mes)
     nome_categoria = filtro_categoria(categoria)
 
-    filtros = nome_cliente & nome_mes & categoria
+    filtros = nome_cliente & nome_mes & nome_categoria
 
     df1 = df.loc[filtros]
 
